@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Chat Room</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script type="text/javascript" src='/socket.io/socket.io.js'></script>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			var name = prompt('What is your name?');
+			io = io.connect();
+			
+			io.emit('got_a_new_user', {name: name});
+			
+			$('h2 span').html(name);
+			
+			// submit a message when a user clicks the send button
+			$('#sendBtn').click(function(){
+				io.emit('user_message', {name: name, text: $('#textArea').val()});
+				$('#textArea').html('');
+			});
+			
+			// submit a message when a user presses enter
+			$(document).keypress(function(e){
+				if (e.which == 13) {
+					io.emit('user_message', {name: name, text: $('#textArea').val()});
+				}
+				$('#textArea').html('');
+			});
+			
+			// notify when someone has joined the chatroom
+			io.on('new_user', function(data){
+				$('#chatArea').append("<p>"+data.name+" has joined the chat room</p>");
+				console.log(data.users);
+				
+				for (i in data.users) {
+					$('#usersDiv').append("<p>"+data.name+" has joined the chat room</p>");
+				}
+			});
+			
+			// notify when someone has entered a message
+			io.on('updated_text', function(data){
+				$('#chatArea').append("<p>"+data.name+": "+data.text+"</p>");
+			});
+			
+			// notify when someone has left the chatroom
+			io.on('someone_left', function(data){
+				$('#chatArea').append("<p>"+data.name+" has left the chat room</p>");
+				
+			});
+		});
+	</script>
+  </head>
+  <body>
+    <h2>Welcome to the chat room <span></span>!</h2>
+    <div id="usersDiv"></div>
+    <div id="chatArea"></div>
+    <input id="textArea"></input>
+    <button id="sendBtn">Send</button>
+  </body>
+</html>
